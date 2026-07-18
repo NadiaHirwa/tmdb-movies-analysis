@@ -109,3 +109,62 @@ print(df["status"].value_counts())
 df = df[df["status"] == "Released"]
 df = df.drop(columns=["status"])
 print(df.shape)
+
+# Look at the credits structure first
+print(df["credits"].iloc[0].keys())
+print(df["credits"].iloc[0]["cast"][0])
+
+# Extract cast names, sorted by billing order
+
+
+def get_cast_names(credits_cell):
+    cast_list = credits_cell["cast"]
+    sorted_cast = sorted(cast_list, key=lambda person: person["order"])
+    names = [person["name"] for person in sorted_cast]
+    return "|".join(names)
+
+
+df["cast"] = df["credits"].apply(get_cast_names)
+print(df["cast"].head())
+
+# cast_size — how many total cast members
+df["cast_size"] = df["credits"].apply(lambda c: len(c["cast"]))
+print(df["cast_size"].head())
+
+# director — search the whole crew list, don't assume position
+
+
+def get_director(credits_cell):
+    crew_list = credits_cell["crew"]
+    directors = [person["name"] for person in crew_list if person["job"] == "Director"]
+    return "|".join(sorted(directors))
+
+
+df["director"] = df["credits"].apply(get_director)
+print(df["director"].head())
+
+# crew_size
+df["crew_size"] = df["credits"].apply(lambda c: len(c["crew"]))
+print(df["crew_size"].head())
+
+#  Drop the original credits column
+df = df.drop(columns=["credits"])
+print(df.shape)
+
+# Reorder columns
+final_columns = ['id', 'title', 'tagline', 'release_date', 'genres', 'belongs_to_collection',
+ 'original_language', 'budget_musd', 'revenue_musd', 'production_companies',
+ 'production_countries', 'vote_count', 'vote_average', 'popularity', 'runtime',
+ 'overview', 'spoken_languages', 'poster_path', 'cast', 'cast_size', 'director', 'crew_size']
+
+df = df[final_columns]
+print(df.shape)
+print(df.columns.tolist())
+
+# Reset index
+df = df.reset_index(drop=True)
+print(df.index)
+
+# Save the cleaned DataFrame
+df.to_csv("data/processed/movies_clean.csv", index=False)
+print("Saved to data/processed/movies_clean.csv")
